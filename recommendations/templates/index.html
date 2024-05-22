@@ -1,0 +1,144 @@
+{% load static %}
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation Bot</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .bot-avatar {
+            background: url("{% static 'images/bot_avatar.png' %}") center center/cover;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .user-avatar {
+            background: url("{% static 'images/user_avatar.png' %}") center center/cover;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .bot-message, .user-message {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .bot-message .message, .user-message .message {
+            max-width: 70%;
+            padding: 5px;
+            border-radius: 10px;
+        } 
+
+        .bot-message .message {
+            background-color: black;
+            margin-left: 10px;
+        }
+
+        .user-message .message {
+            background-color: #007bff;
+            color: #fff;
+            margin-right: 10px;
+            text-align: right;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="title">Movie Recommendation Bot</div>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            <!-- Display conversation history -->
+            {% for message in conversation %}
+                <div class="{{ message.type }}-message">
+                    <div class="message">
+                        <span class="avatar {{ message.type }}-avatar"></span>
+                        <p>{{ message.message }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Initial message from the bot -->
+            {% if not conversation %}
+            <div class="bot-message">
+                <div class="message">
+                    <span class="avatar bot-avatar"></span>
+                    <p>{{ bot_message }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- User input form -->
+            <form action="{% url 'movie_search' %}" method="post" onsubmit="scrollChatToBottom()">
+                {% csrf_token %}
+                <div class="input-wrapper">
+                    <input type="text" name="user_input"  id="user-input" placeholder="What do you wanna watch?" value="{{ user_input|default:'' }}">
+                    <button type="submit">Send</button>
+                </div>
+            </form>
+
+            <!-- Movie recommendations fetched from IMDb -->
+            {% if movies %}
+            <div class="movie-list">
+                <h2>Movie Recommendations:</h2>
+                <ul class="movie-items">
+                    {% for movie in movies %}
+                        <li class="movie-item" onclick="showPopup('{{ movie.Title }}', '{{ movie.Year }}', '{{ movie.imdbRating }}', '{{ movie.imdbID }}', '{{ movie.Plot }}', '{{ movie.Director }}')">
+                            <div class="movie-poster">
+                                <img src="{{ movie.Poster }}" alt="{{ movie.Title }} Poster" class="movie-poster-img">
+                            </div>
+                            <div class="movie-details">
+                                <h3>{{ movie.Title }} ({{ movie.Year }} {{movie.imdbRating}})</h3>
+                                <button class="cta-button">Details</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div id="movie-popup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="hidePopup()">&times;</span>
+            <h3 id="popup-title"></h3>
+            <p id="popup-year"></p>
+            <p id="popup-rating"></p>
+            <p id="popup-plot"></p>
+            <p id="popup-director"></p>
+            <a id="popup-watch" href="#" target="_blank" class="watch-button">Watch Now</a>
+        </div>
+    </div>
+    
+    <script src="{% static 'js/popup.js' %}"></script>
+    <script>
+        function scrollChatToBottom() {
+            var chatBody = document.getElementById('chat-body');
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    </script>
+    <script>
+        if (performance.navigation.type === 1) {
+            window.location.href = "{% url 'index' %}";
+        }
+    </script>
+    <script>
+        function resetInputField() {
+            document.getElementById('user-input').value = '';
+        }
+        resetInputField();
+    </script>
+</body>
+</html>
